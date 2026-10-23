@@ -1,0 +1,18 @@
+# 密钥(绝不入库)
+.env
+
+# 采集数据(2.1GB 视频有版权;含抖音用户信息,不入库)
+data/
+
+# 运行日志与归档
+logs/
+_archive/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 系统杂项
+Thumbs.db
+.DS_Store

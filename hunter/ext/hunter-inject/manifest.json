@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "hunter-inject",
+  "version": "1.0.0",
+  "description": "douyin page-context data hook for hunter automation",
+  "content_scripts": [
+    {
+      "matches": ["*://www.douyin.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": false
+    }
+  ]
+}
