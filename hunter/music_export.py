@@ -3,9 +3,10 @@
 抖音"原声页"(/music/<id>)的音频就是模板的原始 BGM,比从视频里做
 声道分离可靠。metadata.json 每条视频已带 music_id(store.add 落盘),
 本模块按 music_id 聚合,经注入的 fetch_music / download 保存
-<music_id>.mp3 并写 manifest.json:sha256 与旧 manifest 一致则跳过
-(幂等),超过 max_bytes 或下载为空视为失败并删除半成品,单条失败只
-记 "error" 不拖垮整批。联网实现由调用方注入,本模块导入时不触网。
+<music_id>.mp3 并写 manifest.json:sha256 与旧 manifest 一致则跳过重下
+(幂等,video_ids 仍按本次 metadata 刷新),超过 max_bytes 或下载为空视为
+失败并删除半成品,单条失败只记 "error" 不拖垮整批。联网实现由调用方注入,
+本模块导入时不触网。
 """
 from __future__ import annotations
 
@@ -73,7 +74,9 @@ def export(folder: str | Path, *, fetch_music, download,
         try:
             if old.get("sha256") and dest.exists() \
                     and _sha256(dest) == old["sha256"]:
-                entries.append(old)      # 幂等:原样保留旧条目(含 fetched_at)
+                # 幂等:不重下,只刷新 video_ids(本次 metadata 可能新增共用
+                # 视频),其余字段(含 fetched_at)原样保留。
+                entries.append({**old, "video_ids": vids})
                 logger.info("[原声] sha 一致,跳过: %s", mid)
                 continue
             part.unlink(missing_ok=True)

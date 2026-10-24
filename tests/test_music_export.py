@@ -122,6 +122,31 @@ def test_export_idempotent(tmp_path):
     assert entries == json.loads(manifest1)
 
 
+def test_export_idempotent_refreshes_video_ids(tmp_path):
+    """返修回归:metadata 新增共用同一原声的视频后,跳过重下但 video_ids 刷新。"""
+    folder = make_folder(tmp_path, [{"aweme_id": "111", "music_id": "M1"}])
+    fetch, dl = FakeFetch(), FakeDownload()
+    export(folder, fetch_music=fetch, download=dl)
+    n_fetch, n_dl = len(fetch.calls), len(dl.calls)
+    first = json.loads((folder / "music" / "manifest.json")
+                       .read_text(encoding="utf-8"))[0]
+
+    meta = json.loads((folder / "metadata.json").read_text(encoding="utf-8"))
+    meta["videos"].append({"aweme_id": "222", "music_id": "M1"})
+    (folder / "metadata.json").write_text(
+        json.dumps(meta, ensure_ascii=False), encoding="utf-8")
+
+    entries = export(folder, fetch_music=fetch, download=dl)
+    assert len(fetch.calls) == n_fetch          # 未重新下载
+    assert len(dl.calls) == n_dl
+    assert (folder / "music" / "M1.mp3").read_bytes() == BODY
+    manifest = json.loads((folder / "music" / "manifest.json")
+                          .read_text(encoding="utf-8"))
+    assert manifest[0] == {**first, "video_ids": ["111", "222"]}
+    assert manifest[0]["fetched_at"] == first["fetched_at"]
+    assert entries == manifest
+
+
 def test_export_sha_mismatch_redownloads(tmp_path):
     folder = make_folder(tmp_path, [{"aweme_id": "111", "music_id": "M1"}])
     export(folder, fetch_music=FakeFetch(), download=FakeDownload())
