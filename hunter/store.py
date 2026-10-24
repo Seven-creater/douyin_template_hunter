@@ -93,6 +93,7 @@ class TemplateStore:
             "title": record.get("title"),
             "author": record.get("author"),
             "music": record.get("music"),
+            "music_id": record.get("music_id"),
             "form": record.get("form"),
             "sig": record.get("sig"),
             "page_url": record.get("page_url"),
